@@ -1,0 +1,57 @@
+# ============================================================
+# MANIFEST.toml (Repository Intent, Scope, and Role)
+# ============================================================
+
+# REQ.UNIVERSAL: Professional open projects SHOULD include MANIFEST.toml.
+# WHY: Makes explicit the intent, scope, and role of this repository so that
+#      contributors, dependents, and automated tooling can understand boundaries
+#      without reading all source files.
+# ALT: Internal or private repositories may omit manifest metadata.
+# CUSTOM: Update repo, role, provides, and scope fields as needed.
+
+schema = "adaptive-interfaces-manifest-1"
+schema_url = "https://github.com/adaptive-interfaces/.github/blob/main/schemas/adaptive-interfaces-manifest-1.md"
+
+[meta]
+framework = "Adaptive Interfaces"
+framework_url = "https://github.com/adaptive-interfaces"
+description = "Declarative description of repository intent, scope, and role."
+purpose = "To make explicit the boundaries, responsibilities, and expectations of this skill."
+
+[repo]
+name = "adaptive-tool-discovery"
+kind = "skill"
+status = "active"
+since = "2026"
+summary = "Maps the capability surface of external tools so agents can invoke them correctly. Produces a persistent tool capability registry usable by all agents and subagents on a team."
+
+[role]
+layer = "domain"
+invoked-by = []
+invokes = ["adaptive-conformance-specification"]
+
+[provides]
+artifacts = [
+  "SKILL.md - the operative skill specification",
+  "evaluation/rubric.md - grading criteria for conformance quality",
+  "evaluation/scenarios/ - named test cases for skill validation",
+]
+
+[scope]
+includes = [
+  "discovery of available tools on a given surface",
+  "capability mapping: purpose, invocation, inputs, outputs, failures, constraints",
+  "production of a structured persistent capability registry",
+  "verification of tool behavior through execution",
+  "refresh protocol for keeping the registry current",
+]
+
+excludes = [
+  "codebase or team onboarding context (see adaptive-onboarding)",
+  "observation and conformance discipline (governed by ACS)",
+  "post-discovery verification of agent understanding",
+  "normative judgments about tool design or quality",
+]
+
+[citation]
+preferred = "software"

@@ -1,8 +1,9 @@
 # adaptive-tool-discovery
 
 [![CI Status](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/ci.yml)
-[![Link Check](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml)
 [![MIT](https://img.shields.io/badge/license-see%20LICENSE-yellow.svg)](./LICENSE)
+[![Check Links](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml)
+[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-brightgreen.svg)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/security)
 
 > Adaptive Tool Discovery (ATD) Skill
 

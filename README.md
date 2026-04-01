@@ -60,8 +60,8 @@ cd adaptive-tool-discovery
 mkdir -p evaluation/local/my-scenario
 ```
 
-See [`evaluation/scenarios/`](./evaluation/scenarios/) for examples of how
-scenarios are structured.
+See [`evaluation/scenarios/open-meteo-api/prompt.md`](./evaluation/scenarios/open-meteo-api/prompt.md)
+for an example of how scenarios are structured.
 
 ## Repository contents
 

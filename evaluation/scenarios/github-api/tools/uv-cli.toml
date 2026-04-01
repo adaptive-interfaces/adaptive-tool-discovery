@@ -1,0 +1,143 @@
+# uv CLI — Capability Registry
+# Surface: uv Python package manager CLI
+# Version: 0.11.2 (x86_64-pc-windows-msvc, verified 2026-03-31)
+# Discovery source: uv --help, uv <subcommand> --help
+#
+# Cross-command pattern (applies to all four subcommands):
+#   --frozen   : skip lockfile update; use existing lock as-is
+#   --locked   : assert lockfile will not change; fail if it would
+#   --dry-run  : resolve and plan without writing lockfile or modifying environment
+#   --python   : override Python interpreter for the operation
+#
+# Project requirement:
+#   uv add, uv sync, uv lock — require a pyproject.toml in the current directory
+#   or any parent directory; exit 2 if not found.
+#   uv run — does NOT require a project; operates in --no-project mode if no
+#   pyproject.toml is discovered.
+
+[[tools]]
+name = "uv-run"
+purpose = "Run a command, Python module, or script in the project's managed environment; does not require a project root."
+invoke = "uv run [OPTIONS] [COMMAND]"
+auth = "none"
+
+[tools.inputs]
+required = []
+optional = ["COMMAND", "--with <PACKAGE>", "--module/-m", "--script/-s", "--no-sync", "--frozen", "--locked", "--isolated", "--no-project", "--python/-p <PYTHON>", "--extra <EXTRA>", "--no-dev", "--group <GROUP>", "--env-file <ENV_FILE>", "--package <PACKAGE>", "--all-packages"]
+schema_url = ""
+
+[tools.outputs]
+success = "Exits with the return code of the invoked command. No structured stdout from uv itself; all output is from the child process. Environment is synced before running unless --no-sync or --frozen is passed."
+schema_url = ""
+
+[tools.failures]
+"exit 1 - command not found" = "The specified COMMAND does not exist in PATH or the environment"
+"exit 1 - sync failure" = "Dependency sync failed before running the command (e.g. resolution conflict or network error); use --no-sync to skip"
+"exit 1 - locked assertion" = "--locked passed but the lockfile would change; environment not modified"
+"exit 2 - locked assertion flag" = "--locked fails if uv.lock would be updated"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "none; no authentication required for public packages"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified live: `uv run python --version` → 'Python 3.14.0', exit 0 — succeeded without a pyproject.toml in the working directory. Confirmed: uv run does NOT require a project root (unlike uv add, uv sync, uv lock). Discovery source: `uv run --help` (uv 0.11.2)."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "uv-add"
+purpose = "Add one or more dependencies to the project's pyproject.toml and update the lockfile and environment."
+invoke = "uv add [OPTIONS] <PACKAGES|--requirements <REQUIREMENTS>>"
+auth = "none"
+
+[tools.inputs]
+required = ["PACKAGES (PEP 508 requirement strings, e.g. 'requests', 'ruff==0.5.0') OR --requirements <FILE>"]
+optional = ["--dev", "--optional <EXTRA>", "--group <GROUP>", "--editable", "--no-sync", "--frozen", "--locked", "--upgrade/-U", "--upgrade-package/-P <PACKAGE>", "--python/-p <PYTHON>", "--rev <REV>", "--tag <TAG>", "--branch <BRANCH>", "--script <SCRIPT>", "--package <PACKAGE>", "--raw", "--bounds <BOUNDS>"]
+schema_url = ""
+
+[tools.outputs]
+success = "Exit 0. pyproject.toml updated with the new dependency. uv.lock regenerated (unless --frozen). Project environment synced (unless --no-sync). Output to stderr: resolved package versions."
+schema_url = ""
+
+[tools.failures]
+"exit 2 - no project" = "No pyproject.toml found in current directory or any parent directory; message: 'error: No `pyproject.toml` found in current directory or any parent directory'"
+"exit 1 - package not found" = "Package name not found on the configured index (default: PyPI)"
+"exit 1 - resolution conflict" = "Dependency version conflict; no version satisfies all constraints"
+"exit 1 - locked assertion" = "--locked passed but adding the package would change the lockfile"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "none; network access required unless --offline or --no-index"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified exit-2 failure live: `uv add requests` run in C:/Windows/Temp (no pyproject.toml) → 'error: No `pyproject.toml` found in current directory or any parent directory', exit 2. Discovery source: `uv add --help` (uv 0.11.2)."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "uv-sync"
+purpose = "Install or update the project environment to match the current lockfile; adds/removes packages as needed."
+invoke = "uv sync [OPTIONS]"
+auth = "none"
+
+[tools.inputs]
+required = []
+optional = ["--frozen", "--locked", "--dry-run", "--check", "--no-dev", "--extra <EXTRA>", "--group <GROUP>", "--all-groups", "--inexact", "--no-install-project", "--no-install-workspace", "--all-packages", "--package <PACKAGE>", "--python/-p <PYTHON>", "--upgrade/-U", "--upgrade-package/-P <PACKAGE>"]
+schema_url = ""
+
+[tools.outputs]
+success = "Exit 0. Virtual environment updated to match uv.lock. Packages installed, upgraded, or removed as needed. With --dry-run: prints planned changes without applying them. With --check: exits 0 if in sync, non-zero if not."
+schema_url = ""
+
+[tools.failures]
+"exit 2 - no project" = "No pyproject.toml found in current directory or any parent directory; message: 'error: No `pyproject.toml` found in current directory or any parent directory'"
+"exit 1 - missing lockfile" = "No uv.lock exists and --frozen is passed; run `uv lock` first"
+"exit 1 - locked assertion" = "--locked passed but the lockfile would change"
+"exit 1 - install failure" = "Package download or installation failed (network error, wheel build failure)"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "none; network access required to download packages unless using cache"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified exit-2 failure live: `uv sync` run in C:/Windows/Temp (no pyproject.toml) → 'error: No `pyproject.toml` found in current directory or any parent directory', exit 2. Discovery source: `uv sync --help` (uv 0.11.2)."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "uv-lock"
+purpose = "Resolve project dependencies and write or update the uv.lock lockfile without modifying the environment."
+invoke = "uv lock [OPTIONS]"
+auth = "none"
+
+[tools.inputs]
+required = []
+optional = ["--check", "--check-exists", "--dry-run", "--upgrade/-U", "--upgrade-package/-P <PACKAGE>", "--python/-p <PYTHON>", "--script <SCRIPT>", "--resolution <RESOLUTION>", "--prerelease <PRERELEASE>", "--exclude-newer <EXCLUDE_NEWER>"]
+schema_url = ""
+
+[tools.outputs]
+success = "Exit 0. uv.lock written or updated. With --check: exits 0 if lockfile is up-to-date, non-zero if stale. With --check-exists: exits 0 if uv.lock exists, non-zero if not. With --dry-run: resolves without writing."
+schema_url = ""
+
+[tools.failures]
+"exit 2 - no project" = "No pyproject.toml found in current directory or any parent directory; message: 'error: No `pyproject.toml` found in current directory or any parent directory'"
+"exit 1 - resolution conflict" = "No version of a package satisfies all constraints"
+"exit 1 - check failed" = "--check passed but lockfile is out of date"
+"exit 1 - check-exists failed" = "--check-exists passed but no uv.lock file found"
+"exit 1 - network error" = "Index unreachable and package metadata not cached; use --offline to fail fast"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "none; network access required for fresh resolution unless metadata is cached"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified exit-2 failure live: `uv lock` run in C:/Windows/Temp (no pyproject.toml) → 'error: No `pyproject.toml` found in current directory or any parent directory', exit 2. Discovery source: `uv lock --help` (uv 0.11.2)."

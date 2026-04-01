@@ -1,0 +1,36 @@
+# Open-Meteo API — Capability Registry
+# Surface: api.open-meteo.com
+# Docs: https://open-meteo.com/en/docs
+# Discovery source: live API calls against api.open-meteo.com (2026-03-31)
+#
+# Authentication: none required
+# Rate limit: not published in response headers; "unverified" for non-commercial use
+
+[[tools]]
+name = "open-meteo-forecast"
+purpose = "Fetch weather forecast data (hourly and/or daily variables) for a given location by latitude and longitude."
+invoke = "GET https://api.open-meteo.com/v1/forecast"
+auth = "none"
+
+[tools.inputs]
+required = ["latitude", "longitude"]
+optional = ["hourly", "daily", "timezone", "forecast_days", "current_weather", "temperature_unit", "wind_speed_unit", "precipitation_unit", "past_days", "start_date", "end_date"]
+schema_url = "https://open-meteo.com/en/docs"
+
+[tools.outputs]
+success = "HTTP 200 with JSON object: {latitude, longitude, generationtime_ms, utc_offset_seconds, timezone, timezone_abbreviation, elevation, hourly_units, hourly, daily_units, daily}. 'hourly_units'/'daily_units' map each requested variable name to its unit string. 'hourly'/'daily' contain a 'time' array (ISO 8601 strings) and one array per requested variable. Returned latitude/longitude are snapped to the nearest model grid point and may differ slightly from inputs."
+schema_url = "https://open-meteo.com/en/docs"
+
+[tools.failures]
+"latitude_range"  = "Latitude out of range; error body: {error: true, reason: 'Latitude must be in range of -90 to 90°. Given: <value>.'}"
+"missing_params"  = "latitude and longitude must both be provided and have the same element count; error body: {error: true, reason: '...'}"
+"invalid_variable" = "Unknown hourly or daily variable name; error body: {error: true, reason: '...'}"
+
+[tools.constraints]
+rate_limit = "unverified; no rate-limit headers observed in responses"
+scope = "none; no authentication required"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.open-meteo.com/v1/forecast?latitude=51.5&longitude=-0.12&hourly=temperature_2m,precipitation&daily=temperature_2m_max,precipitation_sum&timezone=Europe/London&forecast_days=1. Error shape confirmed via invalid latitude (999) and missing longitude calls. Timezone constraint: 'timezone' defaults to GMT when omitted; daily aggregations use UTC. Specify an IANA timezone string (e.g. 'Europe/London', 'America/New_York') to get daily values in local time."

@@ -1,0 +1,159 @@
+ATD Run Summary — MCP Filesystem Server
+========================================
+Date: 2026-03-31
+Agent: claude-sonnet-4-6
+Scenario: evaluation/scenarios/mcp-filesystem-server/prompt.md
+
+
+## 1. Discover
+
+Source consulted: GitHub source for the MCP reference filesystem server
+  https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+  Specifically: src/filesystem/index.ts (raw source, fetched via WebFetch)
+
+Server identity from source:
+  Name: secure-filesystem-server
+  Version: v0.2.0
+  Transport: stdio
+
+Before fetching the source, I checked whether the MCP filesystem tools were
+available as callable tools in the current Claude Code session (via ToolSearch
+for mcp__filesystem__* names). They were not present. The MCP server is
+configured in .claude/mcp_settings.json to run via:
+
+  npx @modelcontextprotocol/server-filesystem C:\Repos
+
+The server was not connected to the active session at the time of this run.
+Discovery therefore proceeded by reading the server source from GitHub, which
+is the authoritative schema declaration (tool names, input schemas, output
+schemas, and annotations are all declared there via Zod schemas).
+
+Tools discovered (14 total):
+
+  1.  read_file                  — readOnly; deprecated alias for read_text_file
+  2.  read_text_file             — readOnly
+  3.  read_media_file            — readOnly
+  4.  read_multiple_files        — readOnly
+  5.  write_file                 — destructive, idempotent
+  6.  edit_file                  — destructive, NOT idempotent
+  7.  create_directory           — NOT destructive, idempotent
+  8.  list_directory             — readOnly
+  9.  list_directory_with_sizes  — readOnly
+  10. directory_tree             — readOnly
+  11. move_file                  — destructive, NOT idempotent
+  12. search_files               — readOnly
+  13. get_file_info              — readOnly
+  14. list_allowed_directories   — readOnly
+
+
+## 2. Interpret
+
+All 14 tools were interpreted directly from their Zod schema declarations in
+index.ts. Key observations:
+
+- Required vs optional parameters: declared explicitly in each Zod schema.
+  No ambiguity; required fields use z.string() or z.array(); optional fields
+  use .optional() or .default().
+
+- Path restriction: all tools route through validatePath() before any
+  filesystem operation. Paths outside allowed directories are rejected.
+  Allowed directories are set at startup via CLI args and may be overridden
+  at runtime by MCP Roots protocol.
+
+- Destructive tools: write_file, edit_file, move_file. write_file overwrites
+  without confirmation. edit_file requires exact text match.
+
+- read_file is a documented deprecated alias for read_text_file. Both are
+  registered as separate tools in the server manifest.
+
+- No duplicated functionality except the deprecated alias pair.
+
+No ambiguity was encountered. All fields were populated from the source.
+
+
+## 3. Select
+
+All 14 tools are within scope for this registry. The scenario requests full
+coverage of the exposed tool surface. No tools were excluded.
+
+
+## 4. Execute
+
+Live invocation was not performed. The MCP filesystem tools were not available
+as callable tools in the active Claude Code session at the time of this run
+(ToolSearch for mcp__filesystem__* returned no matches). The MCP server is
+configured in .claude/mcp_settings.json but was not connected.
+
+Per ATD section 4: "If a tool cannot be safely invoked, record that as a
+constraint." All 14 tools are marked verified = "unverified" in the registry.
+
+The schema source (index.ts) was read directly and is authoritative. No
+inferred or assumed fields are present. All schema information was observed
+from the source, not from prior training knowledge.
+
+
+## 5. Validate
+
+Registry checked before commit:
+
+- All 14 tools present as separate [[tools]] entries.
+- All required schema fields populated: name, purpose, invoke, auth,
+  inputs.required, inputs.optional, outputs.success, failures, constraints,
+  meta.verified, meta.verified_by.
+- All unverified fields marked verified = "unverified".
+- No hallucinated tool names. Tool names taken directly from source
+  declarations (server.tool("name", ...) calls in index.ts).
+- Path restriction constraint recorded under [tools.constraints].scope
+  for every tool.
+- Deprecated status of read_file recorded in meta.notes.
+
+
+## 6. Conclude
+
+Registry produced at: tools/mcp-filesystem.toml
+Copied to: evaluation/scenarios/mcp-filesystem-server/tools/mcp-filesystem.toml
+Manifest updated: tools/manifest.toml
+
+Tools fully mapped: 14 / 14
+Tools with live verification: 0 / 14
+
+What additional access would be needed to complete verification:
+- A Claude Code session with the MCP filesystem server actively connected
+  (tools appearing as mcp__filesystem__* in the deferred tool list).
+- Recommended first verification call: list_allowed_directories (no inputs,
+  no side effects) to confirm server is reachable and see declared scope.
+- Follow with list_directory on an allowed path to verify output format.
+
+
+---
+
+## Score
+
+Rubric: evaluation/rubric.md
+Maximum: 14
+
+| # | Dimension                  | Score | Justification                                                                 |
+|---|---------------------------|-------|-------------------------------------------------------------------------------|
+| 1 | Surface Enumeration        |   2   | All 14 tools identified from server source. Source URL explicit. Names,       |
+|   |                            |       | invocation form, and schemas recorded for each.                               |
+| 2 | Capability Accuracy        |   2   | Purpose, inputs (required vs optional), output structure, and failure modes   |
+|   |                            |       | recorded accurately from Zod schema declarations. Path restriction noted.     |
+| 3 | Verification               |   0   | No live invocations performed. MCP tools not available in session.            |
+|   |                            |       | All entries marked unverified. Constraint recorded in this response.          |
+| 4 | Registry Completeness      |   2   | All required fields present and populated. Unverified fields marked           |
+|   |                            |       | explicitly. No fields omitted or guessed.                                     |
+| 5 | Minimality and Discipline  |   2   | No speculative content. All entries grounded in source schema declarations.   |
+|   |                            |       | No tool names assumed from training knowledge.                                |
+| 6 | Validation Integrity       |   2   | Explicit validation step performed and described. Schema cross-checked        |
+|   |                            |       | against source. No unverified claims present (all marked).                    |
+| 7 | Transparency/Traceability  |   2   | All entries traceable to index.ts source. Discovery method explicit.          |
+|   |                            |       | Verification gap stated clearly. No hidden assumptions.                       |
+
+Total: 12 / 14
+
+Outcome: Conformant (12–14)
+
+Note on Verification score: The 0 on Verification reflects that no live tool
+calls were made. The MCP server was not connected in this session. The rubric
+requires "minimal safe invocations performed for each tool" for a full score.
+The registry is otherwise fully grounded in the server source.

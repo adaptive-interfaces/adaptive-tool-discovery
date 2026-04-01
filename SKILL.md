@@ -1,11 +1,10 @@
 ---
 name: adaptive-tool-discovery
 description: >
-  Generates a persistent capability registry for external tool surfaces —
-  MCP servers, APIs, CLIs, and SDKs — so agents can invoke tools correctly.
+  Generates a persistent capability registry for external tool surfaces -
+  MCP servers, APIs, CLIs, and SDKs - so agents can invoke tools correctly.
   Activate when an agent encounters an unfamiliar tool
   or an existing registry needs refresh.
-
 ---
 
 # Adaptive Tool Discovery (ATD)
@@ -14,7 +13,7 @@ This skill operates under the Adaptive Conformance Specification (ACS).
 Apply ACS discovery and conformance steps before executing any
 domain-specific actions below.
 
-ATD maps the capability surface of external tools —
+ATD maps the capability surface of external tools -
 what exists, what each tool does, how to invoke it correctly,
 and what its failure modes are.
 The output is a persistent tool capability registry
@@ -32,8 +31,8 @@ that any agent or subagent can load without re-running discovery.
 
 ### 1.2. What ATD does not cover
 
-- Codebase or team onboarding context — see Adaptive Onboarding (AO)
-- Observation and conformance discipline — governed by ACS
+- Codebase or team onboarding context - see Adaptive Onboarding (AO)
+- Observation and conformance discipline - governed by ACS
 - Post-discovery verification of agent understanding
 - Normative judgments about tool design or quality
 
@@ -87,7 +86,7 @@ For each tool, determine:
 - Are there rate limits, authentication requirements, or scope restrictions?
 
 Identify any tools that appear to duplicate functionality.
-Note ambiguity explicitly — do not resolve it by assumption.
+Note ambiguity explicitly - do not resolve it by assumption.
 
 ### 2.3. Select
 
@@ -120,6 +119,10 @@ Do not silently omit fields or substitute assumptions.
 
 Produce the capability registry.
 State any tools that could not be fully mapped and why.
+Copy the registry file to the scenario folder used for this run,
+if one exists, so the output is preserved alongside the response.
+Score the registry against the rubric defined in `evaluation/rubric.md`
+and include the score inline in the response.
 State what additional access or documentation would be needed
 to complete those entries.
 
@@ -140,13 +143,38 @@ to complete those entries.
 The registry is owned by the team whose tools it describes.
 It does not live in the ATD repo.
 
-Recommended locations:
+Use one file per tool surface, not one monolithic registry file.
+A single file across many tool surfaces becomes slow and fragile to update (re-verification runs must search hundreds of lines to find and update
+the correct entries, increasing the risk of missed or duplicate updates).
 
-- a file in the team's codebase (e.g. `tools/registry.toml`)
-- a URL serving a structured document (JSON or TOML)
-- a dedicated registry repo if the tool surface is shared
-  across multiple codebases
+Recommended structure:
 
+```text
+tools/
+  manifest.toml          # lists all registry files
+  github-api.toml        # one file per tool surface
+  mcp-filesystem-server.toml
+  open-meteo.toml
+  uv-cli.toml
+```
+
+The manifest declares all registries:
+
+```text
+# tools/manifest.toml
+registries = [
+  "tools/open-meteo.toml",
+  "tools/github-api.toml",
+  "tools/uv-cli.toml",
+]
+```
+
+Agents load the manifest first, then load only
+the registries relevant to their current task.
+Re-verification targets a single surface file,
+not the entire registry.
+For tool surfaces shared across multiple codebases,
+a dedicated registry repo with a stable URL is appropriate.
 The location must be stable and accessible to all agents
 that need to invoke the tools.
 

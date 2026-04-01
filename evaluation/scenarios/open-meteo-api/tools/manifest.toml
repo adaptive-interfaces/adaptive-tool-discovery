@@ -1,0 +1,8 @@
+# Tool Registry Manifest
+# Lists all capability registry files for this project.
+# Agents load this manifest first, then load only the registries relevant to their task.
+
+registries = [
+  "tools/uv-cli.toml",
+  "tools/open-meteo.toml",
+]

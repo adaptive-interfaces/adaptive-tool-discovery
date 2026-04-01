@@ -1,0 +1,45 @@
+Let me verify the appended entries look correct:
+
+  Read 1 file (ctrl+o to expand)
+
+● The registry looks correct. Here's a summary of what was produced:
+
+  ---
+  ATD Run — GitHub REST API
+
+  Discover → Interpret → Select: 9 endpoints mapped across 3 groups from docs.github.com and the OpenAPI spec at github/rest-api-description.
+
+  Execute: Read-only verification calls are permitted by the scenario, but no GitHub token is available in this environment. All 9 entries are marked verified =
+  "unverified" with notes on safe re-verification calls (e.g. GET /repos/github/docs/issues/1). Write endpoints (create, update) cannot be live-verified per the
+  scenario constraint.
+
+  Registry written to tools/registry.toml — 9 entries appended:
+
+  ┌──────────────────────┬───────────────────────────────────────────────────┐
+  │         Name         │                      Invoke                       │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-create  │ POST /user/repos                                  │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-get     │ GET /repos/{owner}/{repo}                         │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-list    │ GET /user/repos                                   │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-create │ POST /repos/{owner}/{repo}/issues                 │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-get    │ GET /repos/{owner}/{repo}/issues/{issue_number}   │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-list   │ GET /repos/{owner}/{repo}/issues                  │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-update │ PATCH /repos/{owner}/{repo}/issues/{issue_number} │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-pulls-get     │ GET /repos/{owner}/{repo}/pulls/{pull_number}     │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-pulls-list    │ GET /repos/{owner}/{repo}/pulls                   │
+  └──────────────────────┴───────────────────────────────────────────────────┘
+
+  Conclude — gaps:
+  - All 9 entries are verified = "unverified". To complete verification, run the read-only GET calls listed in each entry's notes field with a valid PAT.
+  - github-repos-create, github-issues-create, and github-issues-update cannot be live-verified without creating/modifying data — these will remain unverified
+  until a dedicated test environment is available.
+
+✻ Cooked for 2m 31s                

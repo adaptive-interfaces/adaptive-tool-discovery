@@ -1,0 +1,397 @@
+# MCP Reference Filesystem Server — Capability Registry
+# Source: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+# Server name: secure-filesystem-server v0.2.0
+# Transport: stdio
+# Discovery source: server source (index.ts) read from GitHub; no live MCP connection was established in this session.
+
+[[tools]]
+name = "read_file"
+purpose = "Read the full text contents of a file (deprecated alias for read_text_file)."
+invoke = "MCP tool call: {\"name\": \"read_file\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = ["head", "tail"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — full file text, or first/last N lines if head/tail supplied"
+schema_url = ""
+
+[tools.failures]
+BOTH_HEAD_TAIL = "Error thrown if both head and tail are specified simultaneously"
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+FILE_NOT_FOUND = "Throws ENOENT if path does not exist"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Deprecated; prefer read_text_file. head and tail are mutually exclusive."
+
+[[tools]]
+name = "read_text_file"
+purpose = "Read the full text contents of a file, with optional head/tail line limits."
+invoke = "MCP tool call: {\"name\": \"read_text_file\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = ["head", "tail"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — full file text, or first N lines (head) or last N lines (tail)"
+schema_url = ""
+
+[tools.failures]
+BOTH_HEAD_TAIL = "Error thrown if both head and tail are specified simultaneously"
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+FILE_NOT_FOUND = "Throws ENOENT if path does not exist"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Preferred replacement for read_file."
+
+[[tools]]
+name = "read_media_file"
+purpose = "Read a binary media file and return it as base64-encoded content with MIME type."
+invoke = "MCP tool call: {\"name\": \"read_media_file\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: [{ type: 'image'|'audio'|'blob', data: string (base64), mimeType: string }] }"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+FILE_NOT_FOUND = "Throws ENOENT if path does not exist"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories; supported formats: png, jpg, gif, webp, bmp, svg, mp3, wav, ogg, flac; others returned as application/octet-stream"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = ""
+
+[[tools]]
+name = "read_multiple_files"
+purpose = "Read several files in a single call; failed reads are reported inline without aborting the batch."
+invoke = "MCP tool call: {\"name\": \"read_multiple_files\", \"arguments\": {\"paths\": [\"<path1>\", \"<path2>\"]}}"
+auth = "none"
+
+[tools.inputs]
+required = ["paths"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — all files concatenated, separated by \\n---\\n; individual read errors embedded inline"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error for any path outside allowed directories"
+MIN_LENGTH = "paths array must have at least 1 element"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "All paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Partial failures do not abort the batch; errors appear inline in the returned content."
+
+[[tools]]
+name = "write_file"
+purpose = "Create or fully overwrite a file with the given content."
+invoke = "MCP tool call: {\"name\": \"write_file\", \"arguments\": {\"path\": \"<path>\", \"content\": \"<content>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path", "content"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — success message: 'Successfully wrote to <path>'"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+PERMISSION_DENIED = "Throws EACCES if filesystem permissions deny the write"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories; overwrites without confirmation"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Destructive and idempotent (per MCP annotations). No confirmation before overwrite."
+
+[[tools]]
+name = "edit_file"
+purpose = "Apply one or more exact-text replacements to a file, with optional dry-run preview."
+invoke = "MCP tool call: {\"name\": \"edit_file\", \"arguments\": {\"path\": \"<path>\", \"edits\": [{\"oldText\": \"<match>\", \"newText\": \"<replacement>\"}]}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path", "edits"]
+optional = ["dryRun"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — git-style diff of changes applied (or previewed if dryRun=true)"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+NO_MATCH = "Error if oldText does not match exactly"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories; oldText must match exactly (no fuzzy matching)"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Destructive and NOT idempotent (per MCP annotations). dryRun defaults to false."
+
+[[tools]]
+name = "create_directory"
+purpose = "Create a directory (and any missing parents), silently succeeding if it already exists."
+invoke = "MCP tool call: {\"name\": \"create_directory\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — success message"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+PERMISSION_DENIED = "Throws EACCES if filesystem permissions deny creation"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Not destructive; idempotent (per MCP annotations). Uses recursive mkdir."
+
+[[tools]]
+name = "list_directory"
+purpose = "List the contents of a directory, labelling each entry as [FILE] or [DIR]."
+invoke = "MCP tool call: {\"name\": \"list_directory\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — newline-separated entries, each prefixed [FILE] or [DIR]"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+NOT_A_DIRECTORY = "Throws ENOTDIR if path is a file"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = ""
+
+[[tools]]
+name = "list_directory_with_sizes"
+purpose = "List directory contents with file sizes and a summary of total counts and bytes."
+invoke = "MCP tool call: {\"name\": \"list_directory_with_sizes\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = ["sortBy"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — formatted table with [FILE]/[DIR] prefix, name (30-char padded), size (10-char right-aligned); summary line appended"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+NOT_A_DIRECTORY = "Throws ENOTDIR if path is a file"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories; sortBy accepts 'name' (default) or 'size' (descending)"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = ""
+
+[[tools]]
+name = "directory_tree"
+purpose = "Return a recursive JSON tree of a directory's contents, with optional glob-pattern exclusions."
+invoke = "MCP tool call: {\"name\": \"directory_tree\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = ["excludePatterns"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — JSON string of recursive tree: { name, type: 'file'|'directory', children?: [...] }"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories; excludePatterns uses minimatch glob syntax"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "excludePatterns defaults to []. Patterns without * are also tested as **/<pattern> and **/<pattern>/**."
+
+[[tools]]
+name = "move_file"
+purpose = "Move or rename a file or directory; fails if the destination already exists."
+invoke = "MCP tool call: {\"name\": \"move_file\", \"arguments\": {\"source\": \"<src>\", \"destination\": \"<dst>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["source", "destination"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — success message"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if either path resolves outside all allowed directories"
+DESTINATION_EXISTS = "Fails (fs.rename semantics) if destination already exists"
+NOT_FOUND = "Throws ENOENT if source does not exist"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Both source and destination must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Destructive and NOT idempotent (per MCP annotations)."
+
+[[tools]]
+name = "search_files"
+purpose = "Recursively search for files matching a glob pattern under a given root, with optional exclusions."
+invoke = "MCP tool call: {\"name\": \"search_files\", \"arguments\": {\"path\": \"<root>\", \"pattern\": \"<glob>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path", "pattern"]
+optional = ["excludePatterns"]
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — newline-separated absolute paths of matches, or 'No matches found'"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Root path must resolve within server-declared allowed directories; '*.ext' matches current dir only; '**/*.ext' matches recursively"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "excludePatterns defaults to []."
+
+[[tools]]
+name = "get_file_info"
+purpose = "Return filesystem metadata for a file or directory (size, timestamps, permissions, type)."
+invoke = "MCP tool call: {\"name\": \"get_file_info\", \"arguments\": {\"path\": \"<path>\"}}"
+auth = "none"
+
+[tools.inputs]
+required = ["path"]
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — key-value pairs: size, creation time, last modified time, permissions, type (from fs.stat)"
+schema_url = ""
+
+[tools.failures]
+PATH_OUTSIDE_ALLOWED = "Error if path resolves outside all allowed directories"
+NOT_FOUND = "Throws ENOENT if path does not exist"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "Paths must resolve within server-declared allowed directories"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = ""
+
+[[tools]]
+name = "list_allowed_directories"
+purpose = "Return the list of directories the server is permitted to access."
+invoke = "MCP tool call: {\"name\": \"list_allowed_directories\", \"arguments\": {}}"
+auth = "none"
+
+[tools.inputs]
+required = []
+optional = []
+schema_url = ""
+
+[tools.outputs]
+success = "{ content: string } — 'Allowed directories:\\n<path1>\\n<path2>...'"
+schema_url = ""
+
+[tools.failures]
+NONE_KNOWN = "No known failure modes; always succeeds if server is running"
+
+[tools.constraints]
+rate_limit = "none"
+scope = "none"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD run 2026-03-31"
+notes = "Use this as the first call to confirm which directories are in scope before invoking other tools."

@@ -1,0 +1,298 @@
+# GitHub REST API — Capability Registry
+# Surface: api.github.com
+# Spec: https://github.com/github/rest-api-description
+# Scope: repositories (create, get, list), issues (create, get, list, update), pull requests (get, list)
+#
+# Verification notes (2026-03-31):
+#   Read-only GET endpoints verified live with GITHUB_TOKEN (scope: public_repo).
+#   Verification target: octocat/Hello-World (public repo).
+#   Rate limit confirmed from X-RateLimit-Limit response header: 5000/hour.
+#   Auth scope confirmed from X-OAuth-Scopes / X-Accepted-OAuth-Scopes headers.
+#   Mutation endpoints (POST, PATCH) not invoked — would create or modify data.
+#   Schema for mutation endpoints sourced from GitHub REST API spec.
+
+# ---------------------------------------------------------------------------
+# REPOSITORIES
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-repos-create"
+purpose = "Create a new repository for the authenticated user."
+invoke = "POST https://api.github.com/user/repos"
+auth = "Bearer token in Authorization header; requires public_repo scope (public) or repo scope (private)"
+
+[tools.inputs]
+required = ["name"]
+optional = ["description", "homepage", "private", "has_issues", "has_projects", "has_wiki", "auto_init", "gitignore_template", "license_template", "allow_squash_merge", "allow_merge_commit", "allow_rebase_merge", "delete_branch_on_merge"]
+schema_url = "https://docs.github.com/rest/repos/repos#create-a-repository-for-the-authenticated-user"
+
+[tools.outputs]
+success = "HTTP 201 with full repository object (id, name, full_name, owner, private, html_url, description, fork, url, clone_url, ssh_url, created_at, updated_at, pushed_at, language, forks_count, stargazers_count, open_issues_count, default_branch, visibility, ...)"
+schema_url = "https://docs.github.com/rest/repos/repos#create-a-repository-for-the-authenticated-user"
+
+[tools.failures]
+"401" = "Missing or invalid authentication token"
+"403" = "Insufficient token scope"
+"422" = "Validation failed — name already exists, reserved name, or invalid field value"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "public_repo for public repos; repo for private repos"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Not invoked live — would create data. Schema sourced from GitHub REST API spec. Safe re-verification: use a dedicated test account and delete the repo after creation."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-repos-get"
+purpose = "Fetch full metadata for a single repository by owner and name."
+invoke = "GET https://api.github.com/repos/{owner}/{repo}"
+auth = "Bearer token in Authorization header; token optional for public repos"
+
+[tools.inputs]
+required = ["owner", "repo"]
+optional = []
+schema_url = "https://docs.github.com/rest/repos/repos#get-a-repository"
+
+[tools.outputs]
+success = "HTTP 200 with full repository object (id, node_id, name, full_name, owner, private, html_url, description, fork, url, clone_url, ssh_url, size, stargazers_count, watchers_count, language, forks_count, open_issues_count, default_branch, visibility, topics, license, created_at, updated_at, pushed_at, ...)"
+schema_url = "https://docs.github.com/rest/repos/repos#get-a-repository"
+
+[tools.failures]
+"301" = "Permanent redirect — repository has been renamed or transferred"
+"401" = "Missing or invalid authentication token"
+"403" = "Forbidden — token lacks access to the repository"
+"404" = "Repository not found; body: {message: 'Not Found', documentation_url: '...', status: '404'}"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "none for public repos; repo for private repos"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/repos/octocat/Hello-World. Verified HTTP 404 live against non-existent repo; 404 body shape confirmed: {message, documentation_url, status}."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-repos-list"
+purpose = "List repositories accessible to the authenticated user, ordered by most recently pushed."
+invoke = "GET https://api.github.com/user/repos"
+auth = "Bearer token in Authorization header; required"
+
+[tools.inputs]
+required = []
+optional = ["visibility", "affiliation", "type", "sort", "direction", "per_page", "page", "since", "before"]
+schema_url = "https://docs.github.com/rest/repos/repos#list-repositories-for-the-authenticated-user"
+
+[tools.outputs]
+success = "HTTP 200 with JSON array of repository objects (same shape as github-repos-get). Paginated; use Link header (rel=next/prev/first/last) to traverse pages. Default per_page=30, max per_page=100."
+schema_url = "https://docs.github.com/rest/repos/repos#list-repositories-for-the-authenticated-user"
+
+[tools.failures]
+"401" = "Missing or invalid authentication token; body: {message: 'Requires authentication', documentation_url: '...', status: '401'}"
+"403" = "Forbidden — token lacks sufficient scope"
+"422" = "Validation failed on query parameters"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "repo (includes private repos) or public_repo (public only)"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/user/repos?per_page=1. Verified HTTP 401 by omitting Authorization header; 401 body shape confirmed: {message, documentation_url, status}."
+
+# ---------------------------------------------------------------------------
+# ISSUES
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-issues-create"
+purpose = "Create a new issue in a repository."
+invoke = "POST https://api.github.com/repos/{owner}/{repo}/issues"
+auth = "Bearer token in Authorization header; requires public_repo scope (public) or repo scope (private)"
+
+[tools.inputs]
+required = ["owner", "repo", "title"]
+optional = ["body", "assignee", "milestone", "labels", "assignees"]
+schema_url = "https://docs.github.com/rest/issues/issues#create-an-issue"
+
+[tools.outputs]
+success = "HTTP 201 with full issue object (id, node_id, number, title, body, user, labels, state, assignees, milestone, comments, html_url, url, created_at, updated_at, closed_at, ...)"
+schema_url = "https://docs.github.com/rest/issues/issues#create-an-issue"
+
+[tools.failures]
+"401" = "Missing or invalid authentication token"
+"403" = "Forbidden — issues disabled on this repository or insufficient scope"
+"404" = "Repository not found"
+"410" = "Issues are permanently disabled for this repository"
+"422" = "Validation failed — e.g. invalid label or milestone reference"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "public_repo for public repos; repo for private repos"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Not invoked live — would create data. Schema sourced from GitHub REST API spec. Safe re-verification: create in a dedicated test repo then close the issue."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-issues-get"
+purpose = "Fetch a single issue by its number within a repository."
+invoke = "GET https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
+auth = "Bearer token in Authorization header; token optional for public repos"
+
+[tools.inputs]
+required = ["owner", "repo", "issue_number"]
+optional = []
+schema_url = "https://docs.github.com/rest/issues/issues#get-an-issue"
+
+[tools.outputs]
+success = "HTTP 200 with full issue object (id, node_id, number, title, body, user, labels, state, assignees, milestone, comments, html_url, url, created_at, updated_at, closed_at, pull_request [if linked], ...)"
+schema_url = "https://docs.github.com/rest/issues/issues#get-an-issue"
+
+[tools.failures]
+"301" = "Permanent redirect"
+"404" = "Issue not found or repository not found"
+"410" = "Issue permanently deleted"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "none for public repos; repo for private repos"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/repos/octocat/Hello-World/issues/1. Note: pull requests are accessible via this endpoint by issue number; response includes a 'pull_request' key when applicable."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-issues-list"
+purpose = "List issues for a repository, optionally filtered by state, labels, assignee, milestone, or date."
+invoke = "GET https://api.github.com/repos/{owner}/{repo}/issues"
+auth = "Bearer token in Authorization header; token optional for public repos"
+
+[tools.inputs]
+required = ["owner", "repo"]
+optional = ["milestone", "state", "assignee", "creator", "mentioned", "labels", "sort", "direction", "since", "per_page", "page"]
+schema_url = "https://docs.github.com/rest/issues/issues#list-repository-issues"
+
+[tools.outputs]
+success = "HTTP 200 with JSON array of issue objects. Default state filter is 'open'. Paginated via Link header. Default per_page=30, max per_page=100. Pull requests are included in results — check for absence of a 'pull_request' key to filter to issues only."
+schema_url = "https://docs.github.com/rest/issues/issues#list-repository-issues"
+
+[tools.failures]
+"404" = "Repository not found"
+"422" = "Validation failed on query parameters"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "none for public repos; repo for private repos"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/repos/octocat/Hello-World/issues?per_page=1. Pull requests appear in results — distinguish by checking for 'pull_request' key."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-issues-update"
+purpose = "Update an existing issue's title, body, state, assignees, labels, or milestone."
+invoke = "PATCH https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
+auth = "Bearer token in Authorization header; requires public_repo scope (public) or repo scope (private)"
+
+[tools.inputs]
+required = ["owner", "repo", "issue_number"]
+optional = ["title", "body", "state", "state_reason", "milestone", "labels", "assignees"]
+schema_url = "https://docs.github.com/rest/issues/issues#update-an-issue"
+
+[tools.outputs]
+success = "HTTP 200 with updated full issue object"
+schema_url = "https://docs.github.com/rest/issues/issues#update-an-issue"
+
+[tools.failures]
+"401" = "Missing or invalid authentication token"
+"403" = "Forbidden — not a repo collaborator or insufficient scope"
+"404" = "Issue or repository not found"
+"410" = "Issue permanently deleted"
+"422" = "Validation failed — e.g. invalid state transition"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "public_repo for public repos; repo for private repos"
+
+[tools.meta]
+verified = "unverified"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Not invoked live — would modify data. Schema sourced from GitHub REST API spec. 'state' accepts 'open' or 'closed'; 'state_reason' accepts 'completed', 'not_planned', or 'reopened'."
+
+# ---------------------------------------------------------------------------
+# PULL REQUESTS
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-pulls-get"
+purpose = "Fetch a single pull request by its number within a repository."
+invoke = "GET https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
+auth = "Bearer token in Authorization header; token optional for public repos"
+
+[tools.inputs]
+required = ["owner", "repo", "pull_number"]
+optional = []
+schema_url = "https://docs.github.com/rest/pulls/pulls#get-a-pull-request"
+
+[tools.outputs]
+success = "HTTP 200 with full pull request object (id, node_id, number, state, title, body, user, head, base, merged, mergeable, rebaseable, labels, assignees, requested_reviewers, draft, created_at, updated_at, closed_at, merged_at, merge_commit_sha, html_url, diff_url, patch_url, issue_url, commits_url, review_comments_url, statuses_url, _links, author_association, auto_merge, ...)"
+schema_url = "https://docs.github.com/rest/pulls/pulls#get-a-pull-request"
+
+[tools.failures]
+"404" = "Pull request not found or repository not found"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "none for public repos; repo for private repos"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/repos/octocat/Hello-World/pulls/7335 (closed PR). Response contains nested 'head' and 'base' repo objects with full repository metadata."
+
+# ---------------------------------------------------------------------------
+
+[[tools]]
+name = "github-pulls-list"
+purpose = "List pull requests for a repository, optionally filtered by state, head branch, base branch, or sort order."
+invoke = "GET https://api.github.com/repos/{owner}/{repo}/pulls"
+auth = "Bearer token in Authorization header; token optional for public repos"
+
+[tools.inputs]
+required = ["owner", "repo"]
+optional = ["state", "head", "base", "sort", "direction", "per_page", "page"]
+schema_url = "https://docs.github.com/rest/pulls/pulls#list-pull-requests"
+
+[tools.outputs]
+success = "HTTP 200 with JSON array of pull request objects (same shape as github-pulls-get but without mergeable/rebaseable fields). Default state filter is 'open'. Paginated via Link header. Default per_page=30, max per_page=100."
+schema_url = "https://docs.github.com/rest/pulls/pulls#list-pull-requests"
+
+[tools.failures]
+"404" = "Repository not found"
+"422" = "Validation failed on query parameters"
+
+[tools.constraints]
+rate_limit = "5000 requests/hour (authenticated)"
+scope = "none for public repos; repo for private repos"
+
+[tools.meta]
+verified = "2026-03-31"
+verified_by = "claude-sonnet-4-6 via ATD"
+notes = "Verified HTTP 200 live: GET https://api.github.com/repos/octocat/Hello-World/pulls?state=closed&per_page=1. Default state is 'open'; use state=all or state=closed to include non-open PRs."

@@ -1,0 +1,53 @@
+ATD Run — GitHub REST API (with token)
+
+Discover → Interpret → Select: 9 endpoints mapped across 3 groups.
+Sources: GitHub REST API spec at github/rest-api-description, docs at docs.github.com/rest.
+
+Execute: Read-only GET calls verified live against octocat/Hello-World (public repo).
+
+Verified endpoints:
+  github-repos-get      GET /repos/{owner}/{repo}                         HTTP 200 ✓
+  github-repos-list     GET /user/repos                                   HTTP 200 ✓
+  github-issues-get     GET /repos/{owner}/{repo}/issues/{issue_number}   HTTP 200 ✓
+  github-issues-list    GET /repos/{owner}/{repo}/issues                  HTTP 200 ✓
+  github-pulls-get      GET /repos/{owner}/{repo}/pulls/{pull_number}     HTTP 200 ✓
+  github-pulls-list     GET /repos/{owner}/{repo}/pulls                   HTTP 200 ✓
+
+Error shapes verified:
+  404: {message: "Not Found", documentation_url: "...", status: "404"}
+  401: {message: "Requires authentication", documentation_url: "...", status: "401"}
+
+Rate limit confirmed from X-RateLimit-Limit header: 5000 req/hour (authenticated).
+Auth scope confirmed from X-OAuth-Scopes header: public_repo sufficient for public repos.
+
+Write endpoints not invoked per scenario constraint (would create/modify data).
+
+Registry written to tools/registry.toml — 9 entries:
+
+  ┌──────────────────────┬───────────────────────────────────────────────────┐
+  │         Name         │                      Invoke                       │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-create  │ POST /user/repos                                  │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-get     │ GET /repos/{owner}/{repo}                         │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-repos-list    │ GET /user/repos                                   │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-create │ POST /repos/{owner}/{repo}/issues                 │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-get    │ GET /repos/{owner}/{repo}/issues/{issue_number}   │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-list   │ GET /repos/{owner}/{repo}/issues                  │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-issues-update │ PATCH /repos/{owner}/{repo}/issues/{issue_number} │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-pulls-get     │ GET /repos/{owner}/{repo}/pulls/{pull_number}     │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ github-pulls-list    │ GET /repos/{owner}/{repo}/pulls                   │
+  └──────────────────────┴───────────────────────────────────────────────────┘
+
+Conclude — gaps:
+- github-repos-create, github-issues-create, github-issues-update remain
+  verified = "unverified" — mutation calls not permitted by scenario constraint.
+  Safe re-verification requires a dedicated test repo.
+- All 6 read-only GET endpoints fully verified with live calls.

@@ -1,0 +1,80 @@
+ATD Run — uv CLI
+
+uv version: 0.11.2 (x86_64-pc-windows-msvc, 2026-03-26)
+
+Discover: Read `uv --help` (version confirmed), then `uv run --help`,
+`uv add --help`, `uv sync --help`, `uv lock --help`.
+No prior knowledge assumed — all capability data sourced from help output.
+
+Interpret:
+- uv add: only subcommand with a required argument (PACKAGES or --requirements)
+- uv run, uv sync, uv lock: no required arguments
+- Cross-command pattern identified: --frozen / --locked / --dry-run appear in
+  all four subcommands with consistent semantics:
+    --frozen   skip lockfile update; use existing lock as-is
+    --locked   assert lockfile will not change; fail if it would
+    --dry-run  resolve/plan without writing lockfile or modifying environment
+- uv run: docs say "no project required" behavior — flagged for live verification
+
+Select: All four subcommands in scope per prompt.
+
+Execute — verified calls:
+
+  1. uv run python --version
+     → "Python 3.14.0", exit 0
+     Confirmed: uv run succeeds without a pyproject.toml present.
+
+  2. uv add requests (run in C:/Windows/Temp, no pyproject.toml)
+     → error: No `pyproject.toml` found in current directory or any parent directory
+     exit 2
+
+  3. uv sync (run in C:/Windows/Temp, no pyproject.toml)
+     → error: No `pyproject.toml` found in current directory or any parent directory
+     exit 2
+
+  4. uv lock (run in C:/Windows/Temp, no pyproject.toml)
+     → error: No `pyproject.toml` found in current directory or any parent directory
+     exit 2
+
+Validate:
+- Failure mode confirmed live for uv add, uv sync, uv lock: exit 2, exact error
+  message recorded. uv run confirmed to NOT require a project root.
+- No hallucinated flags — all flags sourced directly from help text.
+- Cross-command --frozen/--locked/--dry-run pattern grounded in observed help output.
+
+Registry written to tools/uv-cli.toml — 4 entries:
+
+  ┌──────────┬───────────────────────────────────────────────────────────────────┐
+  │   Name   │                         Invoke                                    │
+  ├──────────┼───────────────────────────────────────────────────────────────────┤
+  │ uv-run   │ uv run [OPTIONS] [COMMAND]                                         │
+  ├──────────┼───────────────────────────────────────────────────────────────────┤
+  │ uv-add   │ uv add [OPTIONS] <PACKAGES|--requirements <REQUIREMENTS>>          │
+  ├──────────┼───────────────────────────────────────────────────────────────────┤
+  │ uv-sync  │ uv sync [OPTIONS]                                                  │
+  ├──────────┼───────────────────────────────────────────────────────────────────┤
+  │ uv-lock  │ uv lock [OPTIONS]                                                  │
+  └──────────┴───────────────────────────────────────────────────────────────────┘
+
+manifest.toml created at tools/manifest.toml listing registry.toml and uv-cli.toml.
+
+Conclude — gaps:
+- Full flag enumeration not included per prompt scope (key flags only).
+- uv add mutation behavior (pyproject.toml changes, lockfile generation) not
+  verified live — would require a test project. Failure mode (exit 2) verified.
+
+---
+
+Score against evaluation/rubric.md:
+
+| Dimension                        | Score | Notes                                                                                                      |
+| -------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
+| 1. Surface Enumeration           |   2   | Read `uv --help` then each subcommand help; version confirmed (0.11.2 on Windows)                          |
+| 2. Capability Accuracy           |   2   | Only `uv add` has a required arg; --frozen/--locked/--dry-run cross-command pattern correctly identified   |
+| 3. Verification                  |   2   | Live calls: `uv run python --version` exit 0; add/sync/lock exit 2 outside project root — all confirmed    |
+| 4. Registry Completeness         |   2   | All four entries written; failure modes grounded in observed exit codes and messages                       |
+| 5. Minimality and Discipline     |   2   | Scoped to four subcommands per prompt; no extra subcommands mapped                                         |
+| 6. Validation Integrity          |   2   | Failure mode (exit 2, exact message) confirmed live for three commands; uv run no-project behavior verified |
+| 7. Transparency and Traceability |   2   | Every entry traceable to help output or live execution; uv version recorded in meta                        |
+
+Total: 14 / 14 — Conformant

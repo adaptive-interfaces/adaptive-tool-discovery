@@ -104,6 +104,40 @@ an adaptation of
 The adaptive-interfaces manifest borrows the pattern
 (explicit includes/excludes, declarative intent) without the schema binding.
 
+## Decision 8. Registry structure: one file per tool surface
+
+Use one TOML file per tool surface rather than one monolithic registry file,
+with a manifest.toml that lists all registry files.
+
+### Rationale 8
+
+Observed during scenario testing: re-verification of the GitHub API entries
+in a monolithic registry (560+ lines, 3 tool surfaces) took 12m 18s and
+required the agent to search and update entries across a large file.
+On large tool sets this is slow, fragile, and risks missed or duplicate updates.
+Per-surface files keep each file small and focused.
+Re-verification targets one file, not the entire registry.
+Agents load only the registries relevant to their current task.
+The manifest provides a stable index without requiring agents to
+scan the filesystem.
+
+## Decision 9. Conclude step: inline scoring and artifact copy
+
+The Conclude step requires the agent to score its own output
+against the rubric inline in the response,
+and to copy the registry file to the scenario folder if one exists.
+
+### Rationale 9
+
+Observed during scenario testing: the agent self-scored and copied
+the artifact unprompted in the github-api run 3.
+This behavior makes evaluation traceable without a separate manual step.
+The score is recorded alongside the evidence that justifies it,
+and the registry is preserved in the scenario folder for comparison
+across runs.
+Making these behaviors explicit in the spec ensures they happen
+consistently rather than opportunistically.
+
 ## See Also
 
 - [Markdown Architectural Decision Records](https://adr.github.io/madr/)

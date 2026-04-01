@@ -16,6 +16,10 @@
 # committed or pushed. Clone, do not fork, to preserve upstream pull access.
 evaluation/local/
 
+# WHY: Generated registry output from local test runs; not part of the specification.
+# Scenario-level copies in evaluation/scenarios/*/tools/ are committed as reference outputs.
+/tools/
+
 
 # === Universal (all projects, all languages) ===
 

@@ -49,6 +49,41 @@ Skills that depend on ATD include this in their preamble:
 
 Read [`SKILL.md`](./SKILL.md) for the full specification.
 
+## Using ACS with ATD
+
+ATD invokes the
+[Adaptive Conformance Specification (ACS)](https://github.com/adaptive-interfaces/adaptive-conformance-specification)
+as its foundational observation and conformance layer.
+When running ATD in a Claude Code session, the agent needs access to ACS.
+
+### Option A: Load ACS from URL (simplest)
+
+Prefix your session command with the ACS URL:
+
+```shell
+Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+then read SKILL.md
+then follow evaluation/scenarios/<scenario-name>/prompt.md
+```
+
+### Option B: Add ACS to your repo (recommended for teams)
+
+Copy ACS into your repo alongside ATD's SKILL.md:
+
+```shell
+curl -o ACS.md https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+```
+
+Then reference both in your session:
+
+```shell
+Read ACS.md then read SKILL.md then follow your-scenario/prompt.md
+```
+
+This works offline, survives URL changes, and makes the version of ACS
+your team is using explicit and auditable.
+Pin to a specific commit hash in the URL for version stability.
+
 ## Testing ATD on your own tool surface
 
 Clone the repo and add your own private scenarios under `evaluation/local/`.
@@ -234,7 +269,9 @@ Then in the session, paste the commands provided below, e.g. something like this
 
 ```shell
 ─────────────────────────────────────────────────────────────────────────
-❯ Read SKILL.md then follow evaluation/scenarios/<scenario-name>/prompt.md
+❯ Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+then read SKILL.md
+then follow evaluation/scenarios/<scenario-name>/prompt.md
 ─────────────────────────────────────────────────────────────────────────
 ```
 
@@ -253,7 +290,9 @@ github-api, open-meteo-api, uv-cli, mcp-filesystem-server.
 ```shell
 Run: if ($env:GITHUB_TOKEN) { "token is set" } else { "token is NOT set" }
 
-Read SKILL.md then follow evaluation/scenarios/github-api/prompt.md
+Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+then read SKILL.md
+then follow evaluation/scenarios/github-api/prompt.md
 ```
 
 ### Run Scenario 2: mcp-filesystem-server
@@ -263,27 +302,25 @@ Show me your MCP configuration
 
 What MCP servers and tools are available?
 
-Read SKILL.md then follow evaluation/scenarios/mcp-filesystem-server/prompt.md
+Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+then read SKILL.md
+then follow evaluation/scenarios/mcp-filesystem-server/prompt.md
 ```
 
 ### Run Scenario 3: open-meteo-api (no auth)
 
 ```shell
-Read SKILL.md then follow evaluation/scenarios/open-meteo-api/prompt.md
+Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
+then read SKILL.md
+then follow evaluation/scenarios/open-meteo-api/prompt.md
 ```
 
 ### Run Scenario 4: uv-cli (no auth)
 
 ```shell
-Read SKILL.md then follow evaluation/scenarios/uv-cli/prompt.md
-```
-
-## Alternative: Explicitly Call ACS (not required)
-
-```shell
 Read https://raw.githubusercontent.com/adaptive-interfaces/adaptive-conformance-specification/main/SKILL.md
 then read SKILL.md
-then follow evaluation/scenarios/<scenario-name>/prompt.md
+then follow evaluation/scenarios/uv-cli/prompt.md
 ```
 
 ## License

@@ -11,7 +11,7 @@
 cff-version: "1.2.0"
 type: software
 
-title: "adaptive-tool-discovery"
+title: "Adaptive Tool Discovery (ATD)"
 date-released: "2026-03-31"
 
 authors:
@@ -24,18 +24,17 @@ repository-code: "https://github.com/adaptive-interfaces/adaptive-tool-discovery
 url: "https://github.com/adaptive-interfaces/adaptive-tool-discovery"
 license: MIT
 
-abstract: |
+abstract: >
   A domain skill for mapping the capability surface of external tools
-  so agents can invoke them correctly without repeated discovery.
-  Produces a persistent tool capability registry usable by all agents
-  and subagents on a team.
+  such as MCP servers, APIs, CLIs, and SDKs into a persistent registry
+  that agents can load and act on without repeated discovery.
+  Operates under the Adaptive Conformance Specification (ACS).
 
 keywords:
   - agent engineering
   - tool discovery
   - capability mapping
-  - LLM agents
-  - MCP servers
+  - MCP
   - AI-assisted development
   - skill specification
   - tool registry

@@ -1,13 +1,6 @@
 # ============================================================
-# MANIFEST.toml (Repository Intent, Scope, and Role)
+# adaptive-tool-discovery/MANIFEST.toml
 # ============================================================
-
-# REQ.UNIVERSAL: Professional open projects SHOULD include MANIFEST.toml.
-# WHY: Makes explicit the intent, scope, and role of this repository so that
-#      contributors, dependents, and automated tooling can understand boundaries
-#      without reading all source files.
-# ALT: Internal or private repositories may omit manifest metadata.
-# CUSTOM: Update repo, role, provides, and scope fields as needed.
 
 schema = "adaptive-interfaces-manifest-1"
 schema_url = "https://github.com/adaptive-interfaces/.github/blob/main/schemas/adaptive-interfaces-manifest-1.md"
@@ -15,26 +8,41 @@ schema_url = "https://github.com/adaptive-interfaces/.github/blob/main/schemas/a
 [meta]
 framework = "Adaptive Interfaces"
 framework_url = "https://github.com/adaptive-interfaces"
-description = "Declarative description of repository intent, scope, and role."
-purpose = "To make explicit the boundaries, responsibilities, and expectations of this skill."
+framework_note = "Provides definitions and conventions for adaptive-interfaces manifest semantics."
+description = "Declarative claim of repository intent, scope, and role."
+purpose = "To make explicit the boundaries, responsibilities, and expectations of this repository relative to others."
 
 [repo]
 name = "adaptive-tool-discovery"
-kind = "skill"
-status = "active"
-since = "2026"
-summary = "Maps the capability surface of external tools so agents can invoke them correctly. Produces a persistent tool capability registry usable by all agents and subagents on a team."
+kind = "domain-skill"
+description = "Maps the capability surface of external tools — MCP servers, APIs, CLIs, SDKs — into a persistent registry agents can load and act on."
 
-[role]
-layer = "domain"
-invoked-by = []
-invokes = ["adaptive-conformance-specification"]
+[layer]
+space = "Agent Engineering"
+role = "domain-skill"
+
+[depends]
+required = [
+  "adaptive-conformance-specification",
+  "claude-code>=1.0",
+]
+optional = [
+  "nodejs>=20",
+  "npx",
+  "uvx",
+  "github-personal-access-token",
+]
 
 [provides]
 artifacts = [
-  "SKILL.md - the operative skill specification",
-  "evaluation/rubric.md - grading criteria for conformance quality",
-  "evaluation/scenarios/ - named test cases for skill validation",
+  "SKILL.md",
+  "MANIFEST.toml",
+  "DECISIONS.md",
+  "CITATION.cff",
+  "LICENSE",
+  "README.md",
+  "evaluation/rubric.md",
+  "evaluation/scenarios/",
 ]
 
 [scope]
@@ -44,8 +52,8 @@ includes = [
   "production of a structured persistent capability registry",
   "verification of tool behavior through execution",
   "refresh protocol for keeping the registry current",
+  "evaluation scenarios and rubric for discovery quality",
 ]
-
 excludes = [
   "codebase or team onboarding context (see adaptive-onboarding)",
   "observation and conformance discipline (governed by ACS)",
@@ -54,4 +62,8 @@ excludes = [
 ]
 
 [citation]
-preferred = "software"
+cff = "CITATION.cff"
+preferred = "repo"
+
+[traceability]
+identifier_map = "none"

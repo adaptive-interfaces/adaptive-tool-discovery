@@ -1,7 +1,7 @@
 # adaptive-tool-discovery
 
 [![CI Status](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/ci.yml)
-[![MIT](https://img.shields.io/badge/license-see%20LICENSE-yellow.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Check Links](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml/badge.svg?branch=main)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/actions/workflows/links.yml)
 [![Dependabot](https://img.shields.io/badge/Dependabot-enabled-brightgreen.svg)](https://github.com/adaptive-interfaces/adaptive-tool-discovery/security)
 
@@ -106,7 +106,6 @@ adaptive-tool-discovery/
   SKILL.md              the specification itself
   MANIFEST.toml         repository intent, scope, and role
   DECISIONS.md          design history and rationale
-  LICENSE               MIT
   evaluation/
     rubric.md           grading criteria for conformance quality
     scenarios/          public test cases
@@ -119,7 +118,7 @@ Format Markdown files with Prettier extension.
 Then run:
 
 ```shell
-npx markdownlint-cli2 "**/*.md"
+npx markdownlint-cli2 --fix
 uvx skillcheck SKILL.md --min-desc-score 75
 ```
 
